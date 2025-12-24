@@ -11,7 +11,7 @@ pool:
 # VARIABLES
 # -------------------------
 variables:
-- group: prod-secrets               # Variable group with DB_PASSWORD (secret)
+- group: prod-secrets                 # Variable group with DB_PASSWORD (secret)
 - name: appName
   value: azure-devops-ci-cd-realworld
 
@@ -21,7 +21,7 @@ variables:
 stages:
 
 # =========================
-# BUILD STAGE
+# BUILD STAGE (Always runs)
 # =========================
 - stage: Build
   displayName: Build Stage
@@ -39,7 +39,7 @@ stages:
       displayName: Build application
 
 # =========================
-# TEST STAGE
+# TEST STAGE (Always runs)
 # =========================
 - stage: Test
   displayName: Test Stage
@@ -57,10 +57,16 @@ stages:
 
 # =========================
 # DEPLOY TO DEV
+# Only runs from main
 # =========================
 - stage: Deploy_Dev
   displayName: Deploy to Dev
   dependsOn: Test
+  condition: |
+    and(
+      succeeded(),
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    )
   jobs:
   - deployment: DevDeploy
     displayName: Dev Deployment
@@ -76,15 +82,21 @@ stages:
             displayName: Deploy to Dev
 
 # =========================
-# DEPLOY TO PROD (APPROVAL REQUIRED)
+# DEPLOY TO PROD (HARDENED)
+# Only runs from main + approval
 # =========================
 - stage: Deploy_Prod
   displayName: Deploy to Prod
   dependsOn: Deploy_Dev
+  condition: |
+    and(
+      succeeded(),
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    )
   jobs:
   - deployment: ProdDeploy
     displayName: Prod Deployment
-    environment: prod
+    environment: prod              # Manual approval configured here
     strategy:
       runOnce:
         deploy:
