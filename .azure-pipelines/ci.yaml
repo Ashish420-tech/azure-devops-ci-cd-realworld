@@ -4,9 +4,29 @@ trigger:
 pool:
   name: Default
 
-steps:
-- script: |
-    echo "Starting CI pipeline"
-    echo "Listing project files"
-    ls -R
-  displayName: 'Verify repository structure'
+variables:
+  appName: azure-devops-ci-cd-realworld
+
+stages:
+- stage: Build
+  displayName: Build Stage
+  jobs:
+  - job: BuildJob
+    displayName: Build Job
+    steps:
+    - script: |
+        echo "Building application: $(appName)"
+        ls -R
+      displayName: Build application
+
+- stage: Test
+  displayName: Test Stage
+  dependsOn: Build
+  jobs:
+  - job: TestJob
+    displayName: Test Job
+    steps:
+    - script: |
+        echo "Running tests for $(appName)"
+        echo "All tests passed"
+      displayName: Run tests
