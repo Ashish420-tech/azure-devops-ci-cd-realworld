@@ -12,21 +12,48 @@ stages:
   displayName: Build Stage
   jobs:
   - job: BuildJob
-    displayName: Build Job
     steps:
     - script: |
-        echo "Building application: $(appName)"
+        echo "Building $(appName)"
         ls -R
-      displayName: Build application
+      displayName: Build
 
 - stage: Test
   displayName: Test Stage
   dependsOn: Build
   jobs:
   - job: TestJob
-    displayName: Test Job
     steps:
     - script: |
-        echo "Running tests for $(appName)"
+        echo "Testing $(appName)"
         echo "All tests passed"
-      displayName: Run tests
+      displayName: Test
+
+- stage: Deploy_Dev
+  displayName: Deploy to Dev
+  dependsOn: Test
+  jobs:
+  - deployment: DevDeploy
+    environment: dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              echo "Deploying $(appName) to DEV"
+            displayName: Deploy Dev
+
+- stage: Deploy_Prod
+  displayName: Deploy to Prod
+  dependsOn: Deploy_Dev
+  jobs:
+  - deployment: ProdDeploy
+    environment: prod
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              echo "Deploying $(appName) to PROD"
+            displayName: Deploy Prod
+
