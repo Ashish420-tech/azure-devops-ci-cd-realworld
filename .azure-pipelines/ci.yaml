@@ -2,38 +2,53 @@ trigger:
 - main
 
 pool:
-  name: Default
+  name: Default   # self-hosted agent pool
 
+# -------------------------
+# VARIABLES
+# -------------------------
 variables:
-  appName: azure-devops-ci-cd-realworld
+- group: prod-secrets        # Variable Group (DB_PASSWORD is secret)
+- name: appName
+  value: azure-devops-ci-cd-realworld
 
+# -------------------------
+# STAGES
+# -------------------------
 stages:
+
+# ===== BUILD STAGE =====
 - stage: Build
   displayName: Build Stage
   jobs:
   - job: BuildJob
+    displayName: Build Job
     steps:
     - script: |
-        echo "Building $(appName)"
+        echo "Building application: $(appName)"
         ls -R
-      displayName: Build
+      displayName: Build application
 
+# ===== TEST STAGE =====
 - stage: Test
   displayName: Test Stage
   dependsOn: Build
   jobs:
   - job: TestJob
+    displayName: Test Job
     steps:
     - script: |
-        echo "Testing $(appName)"
+        echo "Running tests for $(appName)"
         echo "All tests passed"
-      displayName: Test
+      displayName: Run tests
 
+# ===== DEPLOY TO DEV =====
 - stage: Deploy_Dev
   displayName: Deploy to Dev
   dependsOn: Test
   jobs:
   - deployment: DevDeploy
+    displayName: Dev Deployment
     environment: dev
     strategy:
       runOnce:
@@ -43,11 +58,13 @@ stages:
               echo "Deploying $(appName) to DEV"
             displayName: Deploy Dev
 
+# ===== DEPLOY TO PROD =====
 - stage: Deploy_Prod
   displayName: Deploy to Prod
   dependsOn: Deploy_Dev
   jobs:
   - deployment: ProdDeploy
+    displayName: Prod Deployment
     environment: prod
     strategy:
       runOnce:
@@ -55,5 +72,6 @@ stages:
           steps:
           - script: |
               echo "Deploying $(appName) to PROD"
+              echo "Using DB password: $(DB_PASSWORD)"
             displayName: Deploy Prod
 
