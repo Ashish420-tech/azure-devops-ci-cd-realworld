@@ -1,14 +1,17 @@
 trigger:
 - main
 
+# -------------------------
+# AGENT POOL (Self-hosted)
+# -------------------------
 pool:
-  name: Default   # self-hosted agent pool
+  name: Default
 
 # -------------------------
 # VARIABLES
 # -------------------------
 variables:
-- group: prod-secrets        # Variable Group (DB_PASSWORD is secret)
+- group: prod-secrets               # Variable group with DB_PASSWORD (secret)
 - name: appName
   value: azure-devops-ci-cd-realworld
 
@@ -17,7 +20,9 @@ variables:
 # -------------------------
 stages:
 
-# ===== BUILD STAGE =====
+# =========================
+# BUILD STAGE
+# =========================
 - stage: Build
   displayName: Build Stage
   jobs:
@@ -25,11 +30,17 @@ stages:
     displayName: Build Job
     steps:
     - script: |
-        echo "Building application: $(appName)"
+        echo "========== BUILD START =========="
+        date
+        echo "Application: $(appName)"
+        echo "Listing repository files:"
         ls -R
+        echo "========== BUILD END =========="
       displayName: Build application
 
-# ===== TEST STAGE =====
+# =========================
+# TEST STAGE
+# =========================
 - stage: Test
   displayName: Test Stage
   dependsOn: Build
@@ -38,11 +49,15 @@ stages:
     displayName: Test Job
     steps:
     - script: |
+        echo "========== TEST START =========="
         echo "Running tests for $(appName)"
         echo "All tests passed"
+        echo "========== TEST END =========="
       displayName: Run tests
 
-# ===== DEPLOY TO DEV =====
+# =========================
+# DEPLOY TO DEV
+# =========================
 - stage: Deploy_Dev
   displayName: Deploy to Dev
   dependsOn: Test
@@ -55,10 +70,14 @@ stages:
         deploy:
           steps:
           - script: |
+              echo "========== DEV DEPLOY =========="
               echo "Deploying $(appName) to DEV"
-            displayName: Deploy Dev
+              echo "========== DEV DEPLOY COMPLETE =========="
+            displayName: Deploy to Dev
 
-# ===== DEPLOY TO PROD =====
+# =========================
+# DEPLOY TO PROD (APPROVAL REQUIRED)
+# =========================
 - stage: Deploy_Prod
   displayName: Deploy to Prod
   dependsOn: Deploy_Dev
@@ -71,7 +90,8 @@ stages:
         deploy:
           steps:
           - script: |
+              echo "========== PROD DEPLOY =========="
               echo "Deploying $(appName) to PROD"
               echo "Using DB password: $(DB_PASSWORD)"
-            displayName: Deploy Prod
-
+              echo "========== PROD DEPLOY COMPLETE =========="
+            displayName: Deploy to Prod
